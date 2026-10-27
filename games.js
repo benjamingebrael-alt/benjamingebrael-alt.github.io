@@ -7,6 +7,26 @@ const SITE_NAME = 'School Games';
 
 const GAMES = [
   {
+    id: 'cleaning-carpet',
+    title: 'Cleaning Carpet Simulator',
+    category: 'Simulador',
+    tags: ['3D', 'Limpeza', 'Upgrades'],
+    thumb: 'cleaning-carpet.jpg',
+    path: 'cleaning-carpet.html',
+    featured: false,
+    isNew: true,
+    short: 'Esfregue, molhe e empurre as bolhas até o ralo para ganhar dinheiro.',
+    description: 'Limpe tapetes imundos em primeira pessoa. Esfregue com a bucha, molhe as bolhas com a mangueira até virarem bolhas de desenho e empurre com o rodo até o ralo. Cada bolha limpa vira dinheiro para melhorar a bucha, a mangueira, o rodo e o ralo, comprar a vassoura e o polisher e descobrir o mercado negro.',
+    controls: [
+      ['WASD', 'Andar'],
+      ['Shift', 'Correr'],
+      ['Mouse', 'Olhar'],
+      ['Clique', 'Usar ferramenta'],
+      ['F', 'Ver sujeira / enrolar tapete'],
+      ['1 a 6', 'Trocar ferramenta']
+    ]
+  },
+  {
     id: 'turbo-ladder',
     title: 'Turbo Ladder',
     category: 'Corrida',
@@ -29,6 +49,5 @@ const GAMES = [
 
 const COMING_SOON = [
   { title: 'Em breve', category: 'Ação' },
-  { title: 'Em breve', category: 'Puzzle' },
-  { title: 'Em breve', category: 'Esporte' }
+  { title: 'Em breve', category: 'Puzzle' }
 ];
