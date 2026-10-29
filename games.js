@@ -7,6 +7,30 @@ const SITE_NAME = 'School Games';
 
 const GAMES = [
   {
+    id: 'operacao-areia',
+    title: 'Operação Areia',
+    category: 'Tiro',
+    tags: ['3D', 'FPS', 'Tático'],
+    thumb: 'operacao-areia.jpg',
+    path: 'operacao-areia.html',
+    featured: true,
+    isNew: true,
+    short: 'FPS tático 5 contra 5 com agentes, habilidades e 4 mapas.',
+    description: 'Escolha um agente, compre suas armas e entre com seus quatro aliados contra a equipe inimiga. São três agentes com habilidades (Brasa, Névoa e Faísca), seis armas mais a faca, coletes e quatro mapas: Duna Velha, Celeiro, Ruínas e Porto. Quem vencer sete rodadas leva a partida. Precisa de teclado e mouse.',
+    controls: [
+      ['WASD', 'Mover'],
+      ['Mouse', 'Mirar e atirar'],
+      ['Botão direito', 'Zoom / luneta'],
+      ['Espaço', 'Pular'],
+      ['C', 'Agachar'],
+      ['R', 'Recarregar'],
+      ['1 2 3', 'Trocar arma'],
+      ['Q E X', 'Habilidades'],
+      ['B', 'Loja'],
+      ['Esc', 'Pausar']
+    ]
+  },
+  {
     id: 'cleaning-carpet',
     title: 'Cleaning Carpet Simulator',
     category: 'Simulador',
