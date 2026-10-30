@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Operação Areia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -316,8 +316,8 @@ input[type=range]{accent-color:var(--sand);width:170px}
     <div id="lbJoin">
       <div class="eyebrow">Sala privada</div>
       <h2>Jogar com amigos</h2>
-      <p class="small">Crie uma sala e passe o código. Seus amigos abrem este jogo no Claude, clicam em Sala privada e digitam o código.</p>
-      <p class="small warn" id="lbNote2" hidden>A sala privada só funciona com o jogo aberto no Claude por alguém logado e convidado pelo menu Compartilhar. Por um link público ela não conecta.</p>
+      <p class="small">Crie uma sala e passe o código. Seus amigos abrem o Operação Areia, clicam em Sala privada e digitam o código. Cada um joga no seu computador.</p>
+      <p class="small warn" id="lbNote2" hidden>Não deu para carregar a conexão das salas. Confira a internet e recarregue a página.</p>
       <p class="small" id="lbWait">Verificando a conexão…</p>
       <label class="fld" for="nickIn">Seu nome no jogo<input id="nickIn" maxlength="16" autocomplete="off"></label>
       <div class="lbActions">
@@ -368,6 +368,7 @@ input[type=range]{accent-color:var(--sand);width:170px}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (()=>{
 'use strict';
@@ -1786,9 +1787,9 @@ function netFx(ty,p,ot,owner){
   else if(ty==='da'){ring(p,0x45d3c4,30,1.2);if(ot===NET.myTid)reveal(p,30,5);}
   else if(ty==='pu'){ring(new V3(p.x,.3,p.z),0x45d3c4,30,.9);sfx('pulse',.4);if(NET.host)for(const b of NET.bots)if(b.alive&&b.tid!==ot&&b.pos.distanceTo(p)<30){b.stunned=4;}if(ot===NET.myTid)reveal(p,30,4);}
 }
-function netTick(dt){
+function netTick(dt,rawDt){
   const ps=netPeers();
-  if(NET.host){hostTick(dt,ps);}
+  if(NET.host){hostTick(rawDt||dt,ps);}
   else{const hp=hostPeer(ps);
     if(!hp||!hp.presence.g){NET.hostGone+=dt;if(NET.hostGone>5){netAbort('O anfitrião saiu da sala.');return;}}
     else{NET.hostGone=0;NET.g=hp.presence.g;NET.cfg=hp.presence.cfg||NET.cfg;
@@ -1815,7 +1816,12 @@ async function joinRoom(code,asHost){
   if(code.length<4){showLobbyMsg('O código tem 5 letras ou números.');return;}
   if(!NET.api){showLobbyMsg('A sala privada não está disponível aqui.');return;}
   showLobbyMsg('Conectando…');
-  try{NET.room=await NET.api.join('oa-'+code.toLowerCase());}catch(e){NET.room=null;showLobbyMsg(e&&e.code==='not_permitted'?'Sua conta não pode entrar em salas aqui.':'Não deu para conectar. Tente de novo.');return;}
+  let tries=0;
+  for(;;){try{NET.room=await NET.api.join('oa-'+code.toLowerCase(),!!asHost);break;}
+    catch(e){NET.room=null;const c=e&&e.code;
+      if(c==='taken'&&asHost&&tries++<3){code=genCode();continue;}
+      showLobbyMsg(c==='not_found'?'Sala não encontrada. Confira o código e se o anfitrião ainda está na sala.':c==='not_permitted'?'Sua conta não pode entrar em salas aqui.':c==='unsupported'?'Este navegador não suporta salas. Use o Chrome ou o Edge.':
+        c==='timeout'||c==='network'?'Não deu para conectar ao servidor de salas. A internet (ou a rede da escola) pode estar bloqueando.':'Não deu para conectar. Tente de novo.');return;}}
   NET.code=code;NET.host=!!asHost;NET.inRoom=true;NET.g=null;NET.seen={};NET.hits=[];NET.fx=[];NET.feedL=[];NET.dd=null;NET.pres.tid=0;
   if(asHost){NET.cfg.m=mapId;NET.cfg.d=diffId;}
   showLobbyMsg('');showRoomView();netPublish(true);renderRoom();
@@ -1853,6 +1859,52 @@ setInterval(()=>{if(!NET.inRoom)return;if(!NET.inGame){netPublish(false);renderR
       if(g.ph!=='over'&&g.ro.some(r=>r[0]===NET.myPeer)&&g.rid!==NET.lastSeenRid){NET.g=g;NET.lastSeenRid=g.rid;enterNetGame(g);netFollow(g);}}}}},300);
 function hostStartMatch(){if(!NET.host)return;hostMakeG(true);NET.lastSeenRid=NET.g.rid;enterNetGame(NET.g);netFollow(NET.g);netPublish(true);}
 
+/* ---- conexão direta entre navegadores (PeerJS), usada fora do Claude ---- */
+function peerTransport(){
+  if(!window.Peer)return null;
+  const TURN='openrelayproject';
+  const OPTS=Object.assign({debug:0,config:{iceServers:[
+    {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},
+    {urls:'turn:openrelay.metered.ca:80',username:TURN,credential:TURN},
+    {urls:'turn:openrelay.metered.ca:443',username:TURN,credential:TURN},
+    {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:TURN,credential:TURN}]}},window.__PEER_OPTS||{});
+  return {kind:'peer',join(name,asHost){return new Promise((resolve,reject)=>{
+    const hostId='schoolgames-'+name;
+    const peer=asHost?new Peer(hostId,OPTS):new Peer(OPTS);
+    const others=new Map(),conns=new Map();let mine={},myId=null,hostConn=null,snap=null,done=false,closed=false;
+    const fail=code=>{if(done)return;done=true;clearTimeout(to);try{peer.destroy();}catch(e){}reject({code});};
+    const to=setTimeout(()=>fail('timeout'),15000);
+    const send=(c,m)=>{try{if(c&&c.open)c.send(m);}catch(e){}};
+    const bcast=(m,except)=>{for(const [id,c] of conns)if(id!==except)send(c,m);};
+    const room={kind:'peer',
+      presence(patch){for(const k in patch){if(patch[k]===null)delete mine[k];else mine[k]=patch[k];}snap=null;
+        if(asHost)bcast({t:'p',id:myId,pr:mine});else send(hostConn,{t:'p',pr:mine});return Promise.resolve();},
+      peers(){if(!snap){snap=[{peer:myId,presence:mine,sameTab:true,isMe:true}];for(const [id,pr] of others)snap.push({peer:id,presence:pr,sameTab:false,isMe:false});}return snap;},
+      connected(){return !closed;},
+      leave(){closed=true;try{peer.destroy();}catch(e){}others.clear();snap=null;return Promise.resolve();}};
+    peer.on('error',e=>{const t=e&&e.type;
+      if(!done)fail(t==='unavailable-id'?'taken':t==='peer-unavailable'?'not_found':t==='browser-incompatible'?'unsupported':'network');
+      else if(t==='peer-unavailable'&&!asHost){others.clear();snap=null;}});
+    if(asHost){
+      peer.on('open',id=>{myId=id;done=true;clearTimeout(to);resolve(room);});
+      peer.on('connection',c=>{
+        c.on('open',()=>{conns.set(c.peer,c);const all=[[myId,mine]];for(const [id,pr] of others)all.push([id,pr]);send(c,{t:'all',list:all});});
+        c.on('data',m=>{if(!m||m.t!=='p'||typeof m.pr!=='object')return;others.set(c.peer,m.pr);snap=null;bcast({t:'p',id:c.peer,pr:m.pr},c.peer);});
+        const gone=()=>{if(!conns.has(c.peer))return;conns.delete(c.peer);others.delete(c.peer);snap=null;bcast({t:'bye',id:c.peer});};
+        c.on('close',gone);c.on('error',gone);
+      });
+    }else{
+      peer.on('open',id=>{myId=id;hostConn=peer.connect(hostId,{serialization:'json',reliable:true});
+        hostConn.on('open',()=>{done=true;clearTimeout(to);send(hostConn,{t:'p',pr:mine});resolve(room);});
+        hostConn.on('data',m=>{if(!m)return;
+          if(m.t==='all'&&Array.isArray(m.list)){for(const [id,pr] of m.list)if(id!==myId)others.set(id,pr);snap=null;}
+          else if(m.t==='p'&&m.id!==myId){others.set(m.id,m.pr);snap=null;}
+          else if(m.t==='bye'){others.delete(m.id);snap=null;}});
+        const lost=()=>{others.clear();snap=null;if(!done)fail('not_found');};
+        hostConn.on('close',lost);hostConn.on('error',lost);});
+    }
+  });}};
+}
 /* ---- sala: eventos da interface ---- */
 try{const n=localStorage.getItem('oa-nick');if(n)NET.nick=n.slice(0,16);NET.nickSaved=!!n;}catch(_){}
 function saveNick(){const v=($('#nickIn').value||'').trim().slice(0,16);NET.nick=v||NET.nick||'Jogador';try{localStorage.setItem('oa-nick',NET.nick);}catch(_){}}
@@ -1871,7 +1923,7 @@ $('#lbAgents').addEventListener('click',e=>{const b=e.target.closest('button');i
 $('#teams').addEventListener('click',e=>{const b=e.target.closest('.sw');if(!b)return;NET.pres.tid=+b.dataset.t;netPublish(true);setTimeout(renderRoom,80);});
 $('#startBtn').addEventListener('click',()=>{ac();NET.cfg.d=diffId;hostStartMatch();});
 $('#leaveBtn').addEventListener('click',()=>{leaveRoom();cleanupNet();showJoinView();});
-(async()=>{try{NET.api=window.claude&&window.claude.use?await window.claude.use('room'):null;}catch(e){NET.api=null;}NET.apiReady=true;if(!NET.api)$('#privBtn').hidden=true;
+(async()=>{let api=null;try{api=window.claude&&window.claude.use?await window.claude.use('room'):null;}catch(e){api=null;}NET.api=api||peerTransport();NET.apiReady=true;
   try{const u=window.claude&&window.claude.use?await window.claude.use('user'):null;if(u&&!NET.nickSaved){const me=await u.me();if(me&&me.name)NET.nick=me.name.split(' ')[0].slice(0,16);}}catch(e){}
   if(!$('#lobby').hidden&&!NET.inRoom)showJoinView();})();
 
@@ -2083,13 +2135,13 @@ $('#pause').addEventListener('click',e=>{if(e.target.id==='pause')lockPointer();
 let last=performance.now(),menuT=0;
 function frame(now){
   requestAnimationFrame(frame);
-  let dt=Math.min(.05,(now-last)/1000);last=now;
+  const rawDt=Math.min(1,Math.max(0,(now-last)/1000));let dt=Math.min(.05,rawDt);last=now;
   if(state.phase==='menu'||state.phase==='over'){
     menuT+=dt*.06;const cx=W*CELL/2,cz=H*CELL/2;camera.position.set(cx+Math.cos(menuT)*70,48,cz+Math.sin(menuT)*60);camera.lookAt(cx,0,cz);camera.fov=60;camera.updateProjectionMatrix();
     updateWorld(dt);renderer.clear();renderer.render(scene,camera);return;
   }
   if(state.paused&&!NET.on){renderer.clear();renderer.render(scene,camera);return;}
-  if(NET.on){netTick(dt);if(state.phase==='menu'||state.phase==='over'){renderer.clear();renderer.render(scene,camera);return;}}
+  if(NET.on){netTick(dt,rawDt);if(state.phase==='menu'||state.phase==='over'){renderer.clear();renderer.render(scene,camera);return;}}
   // fases
   else if(state.phase==='buy'){state.phaseT-=dt;if(state.phaseT<=0){state.phase='live';$('#buy').hidden||closeBuy(true);banner('VALENDO','Elimine a equipe inimiga','info',1.6);sfx('round',.5);}}
   else if(state.phase==='live'){state.time-=dt;if(state.time<=0)endRound(false,'O tempo acabou');}

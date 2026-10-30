@@ -15,8 +15,8 @@ const GAMES = [
     path: 'operacao-areia.html',
     featured: true,
     isNew: true,
-    short: 'FPS tático 5 contra 5 com agentes, habilidades e 4 mapas.',
-    description: 'Escolha um agente, compre suas armas e entre com seus quatro aliados contra a equipe inimiga. São três agentes com habilidades (Brasa, Névoa e Faísca), seis armas mais a faca, coletes e quatro mapas: Duna Velha, Celeiro, Ruínas e Porto. Quem vencer sete rodadas leva a partida. Precisa de teclado e mouse.',
+    short: 'FPS tático 5 contra 5 com agentes, 4 mapas e sala privada com amigos.',
+    description: 'Escolha um agente, compre suas armas e entre com seus quatro aliados contra a equipe inimiga. São três agentes com habilidades (Brasa, Névoa e Faísca), seis armas mais a faca, coletes e quatro mapas: Duna Velha, Celeiro, Ruínas e Porto. Quem vencer sete rodadas leva a partida. Na Sala privada você cria um código e joga com seus amigos, juntos contra bots ou time contra time. Precisa de teclado e mouse.',
     controls: [
       ['WASD', 'Mover'],
       ['Mouse', 'Mirar e atirar'],
